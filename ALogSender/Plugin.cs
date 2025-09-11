@@ -18,6 +18,7 @@ public class Plugin : BasePlugin
 
     private static ConfigEntry<int> _port;
     private static ConfigEntry<bool> _logToConsole;
+    private static ConfigEntry<bool> _sendFromConsole;
 
     private static UdpClient _udpClient;
     private static CancellationTokenSource _changeCts;
@@ -32,6 +33,7 @@ public class Plugin : BasePlugin
 
         _port = Config.Bind("General", "Port", 9999, new ConfigDescription("Port to listen on", new AcceptableValueRange<int>(1024, 65535)));
         _logToConsole = Config.Bind("General", "LogToConsole", true, new ConfigDescription("Log to the BepInEx Console?"));
+        _sendFromConsole = Config.Bind("General", "sendFronConsole", true, new ConfigDescription("Send BepInEx Console Logs to Viewer?"));
         _port.SettingChanged += (_, _) =>
         {
             _changeCts?.Cancel();
@@ -155,7 +157,7 @@ public class Plugin : BasePlugin
 
         public void LogEvent(object sender, LogEventArgs args)
         {
-            if (sender is not ManualLogSource logSource || logSource == Logger) return;
+            if (sender is not ManualLogSource logSource || logSource == Logger || !_sendFromConsole.Value) return;
             
             Plugin.UdpLog($"[{args.Level.ToString().ToUpper()}][{logSource.SourceName}] {args.Data}");
         }
